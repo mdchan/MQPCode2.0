@@ -95,9 +95,8 @@ void loop() {
       controlState = 4;
     break;
     case 2:
-    Serial.print("Entering passive state");
-    Serial.print("\n");
     //passive state
+    passiveState();
     //if all set, then break and go back to rms reading
     controlState = 4;
     break;
@@ -161,12 +160,12 @@ void sol4On(){
   return;
 }
 
-void driveMotorBack(){
-  linMotor.drive(-255,1);
+int driveMotorBack(int drivetime){
+  linMotor.drive(-255,drivetime);
 }
 
-void driveMotorFor(){
-  linMotor.drive(255,1);
+int driveMotorFor(int drivetime){
+  linMotor.drive(255,drivetime);
 }
 
 void stopMotor(){
@@ -179,9 +178,10 @@ void motorCheck(){
     stopMotor();
   }
   else{
-    driveMotorBack();
+    driveMotorBack(1);
   }
 }
+
 
 void fillBladders(){
 //  Serial.print("Entering Fill State");
@@ -202,16 +202,18 @@ void fillBladders(){
     
     while (fillState == 1){
       sol1Off();
-      while (pressureRead<400){
+      if (pressureRead<400){
         if (potRead >= 1014){
           stopMotor();
         }
         else{
-        //driveMotorFor();
+        driveMotorFor(50);
         Serial.print("Driving motor");
         Serial.print("\n");
+        fillstate = 2;
       }
       }
+      else{
         //if pressure spike, set oldHall to the current hallread value
         oldHall[1] = hallRead1;
         sol1On();
@@ -220,19 +222,22 @@ void fillBladders(){
         fillState = 2;
         break;
       }
+    }
 
     while (fillState == 2){
       sol2Off();
-      while (pressureRead<400){
+      if (pressureRead<400){
         if (potRead >= 1014){
           stopMotor();
         }
         else{
-        //driveMotorFor();
+        driveMotorFor(50);
         Serial.print("Driving motor");
         Serial.print("\n");
+        fillState = 3;
       }
       }
+      else{
         //if pressure spike, set oldHall to the current hallread value
         oldHall[2] = hallRead2;
         sol2On();
@@ -241,19 +246,22 @@ void fillBladders(){
         fillState = 3;
         break;
       }
+    }
     
 while (fillState == 3){
       sol3Off();
-      while (pressureRead<400){
+      if (pressureRead<400){
         if (potRead >= 1014){
           stopMotor();
         }
         else{
-        //driveMotorFor();
+        driveMotorFor(50);
         Serial.print("Driving motor");
         Serial.print("\n");
+        fillState = 4;
       }
       }
+      else{
         //if pressure spike, set oldHall to the current hallread value
         oldHall[3] = hallRead3;
         sol3On();
@@ -262,19 +270,22 @@ while (fillState == 3){
         fillState = 4;
         break;
       }
+}
     
 while (fillState == 4){
       sol4Off();
-      while (pressureRead<400){
+      if (pressureRead<400){
         if (potRead >= 1014){
           stopMotor();
         }
         else{
-        //driveMotorFor();
+        driveMotorFor(50);
         Serial.print("Driving motor");
         Serial.print("\n");
+        fillState =1;
       }
       }
+      else{
         //if pressure spike, set oldHall to the current hallread value
         oldHall[4] = hallRead4;
         sol4On();
@@ -282,8 +293,75 @@ while (fillState == 4){
         Serial.print("\n");
         break;
       }
+}
 //    motorCheck();
       return;
+}
+
+void passiveState(){
+  Serial.print("entering passive state");
+  Serial.print("\n");
+  //sustain case
+  sol1On();
+  sol2On();
+  sol3On();
+  sol4On();
+  
+motorCheck();
+Serial.print(potRead);
+    Serial.print("\n");
+    while (hallRead1 <=oldHall[1]+100){
+        if (potRead >= 1014){
+    stopMotor();
+        }
+        else{
+    sol1Off();
+    Serial.print("driving");
+    Serial.print("\n");
+    driveMotorBack(1);
+        }
+    
+  }
+
+    while (hallRead2 >=oldHall[2]+100){
+        if (potRead >= 1014){
+    stopMotor();
+        }
+        else{
+    sol2Off();
+    Serial.print("driving");
+    Serial.print("\n");
+    driveMotorBack(1);
+        }
+    
+  }
+
+    while (hallRead3 >=oldHall[3]+100){
+        if (potRead >= 1014){
+    stopMotor();
+        }
+        else{
+    sol3Off();
+    Serial.print("driving");
+    Serial.print("\n");
+    driveMotorBack(1);
+        }
+    
+  }
+
+      while (hallRead4 >=oldHall[4]+100){
+        if (potRead >= 1014){
+    stopMotor();
+        }
+        else{
+    sol4Off();
+    Serial.print("driving");
+    Serial.print("\n");
+    driveMotorBack(1);
+        }
+    
+  }
+  
 }
 
 void rmsRead(){
@@ -372,7 +450,7 @@ Serial.print(potRead);
     sol1Off();
     Serial.print("driving");
     Serial.print("\n");
-    driveMotorFor();
+    driveMotorFor(1);
         }
     
   }
@@ -385,7 +463,7 @@ Serial.print(potRead);
     sol2Off();
     Serial.print("driving");
     Serial.print("\n");
-    driveMotorFor();
+    driveMotorFor(1);
         }
     
   }
@@ -398,12 +476,12 @@ Serial.print(potRead);
     sol3Off();
     Serial.print("driving");
     Serial.print("\n");
-    driveMotorFor();
+    driveMotorFor(1);
         }
     
   }
 
-      while (hallRead4 >=oldHall[3]){
+      while (hallRead4 >=oldHall[4]){
         if (potRead >= 1014){
     stopMotor();
         }
@@ -411,7 +489,7 @@ Serial.print(potRead);
     sol4Off();
     Serial.print("driving");
     Serial.print("\n");
-    driveMotorFor();
+    driveMotorFor(1);
         }
     
   }
@@ -422,6 +500,9 @@ Serial.print("exit active state");
   //return;
   //if all set, then break and go back to rms reading
 }
+
+
+
 
 void readSensors(){
   hallRead1 = analogRead(hallPin1);
