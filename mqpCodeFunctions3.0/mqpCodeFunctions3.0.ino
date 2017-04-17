@@ -3,9 +3,9 @@
 #include <TimerOne.h>
 #include <SparkFun_TB6612.h>
 
-#define PWMA 6
+#define PWMA 2
 #define AIN2 4
-#define AIN1 2
+#define AIN1 6
 #define STBY 8
 
 
@@ -56,12 +56,18 @@ int activeCounter = 0;
 int passiveCounter = 0;
 
 
+int maxPressure = 150;
+
+
 //hall rms stuff
 int fill2count = 0;
 int hallrmsval = 0;
 int hallrmsStore = 0;
 int hallSquare = 0;
 int hallrms[64];
+
+int maxpot = 850;
+int minpot = 160;
 
 void setup() {
   // put your setup code here, to run once:
@@ -77,7 +83,7 @@ void setup() {
   digitalWrite(solenoidPin4, LOW);
   Timer1.attachInterrupt(readSensors,1000);
   //linMotor.drive(255,200);
-  controlState = 1;
+  //controlState = 1;
 
 
 }
@@ -86,13 +92,29 @@ void loop() {
   //this is the main control loop
   //while hall effects are activated, fills them up one by one until past point.
 
+//  Serial.print(pressureRead);
+//  Serial.print("\t");
+//   Serial.print(hallRead1);
+//  Serial.print("\t");
+//   Serial.print(hallRead2);
+//  Serial.print("\t");
+//   Serial.print(hallRead3);
+//  Serial.print("\t");
+//  Serial.print(hallRead4);
+//Serial.print("\t");
+//  Serial.print(potRead);
+//  Serial.print("\n");
+//
+  emptyBladders();
+
+        
   switch (controlState){
     case 1:
     //open all sensors
       fillBladders();
       //Serial.print("exit fill");
       //if doesn't enter default
-      controlState = 4;
+      //controlState = 4;
     break;
     case 2:
     //passive state
@@ -160,12 +182,12 @@ void sol4On(){
   return;
 }
 
-int driveMotorBack(int drivetime){
-  linMotor.drive(-255,drivetime);
+int driveMotorBack(int driveBacktime){
+  linMotor.drive(-255,driveBacktime);
 }
 
-int driveMotorFor(int drivetime){
-  linMotor.drive(255,drivetime);
+int driveMotorFor(int driveFortime){
+  linMotor.drive(255,driveFortime);
 }
 
 void stopMotor(){
@@ -174,7 +196,7 @@ void stopMotor(){
 
 void motorCheck(){
     //this is to prevent the linact from breaking
-  if (potRead >= 1024 || potRead < 10){
+  if (potRead >= maxpot-10 || potRead < minpot+10){
     stopMotor();
   }
   else{
@@ -192,7 +214,8 @@ void fillBladders(){
     sol3On();
     sol4On();
     
-  
+    Serial.print(pressureRead);
+  Serial.print("\n");
     
     int fillState;
     fillState = 1;
@@ -202,23 +225,23 @@ void fillBladders(){
     
     while (fillState == 1){
       sol1Off();
-      if (pressureRead<400){
-        if (potRead >= 1014){
+      if (pressureRead<maxPressure){
+        if (potRead >= maxpot){
           stopMotor();
         }
         else{
-        driveMotorFor(50);
-        Serial.print("Driving motor");
-        Serial.print("\n");
-        fillstate = 2;
+        driveMotorFor(250);
+//        Serial.print("Driving motor");
+//        Serial.print("\n");
+        fillState = 2;
       }
       }
       else{
         //if pressure spike, set oldHall to the current hallread value
         oldHall[1] = hallRead1;
         sol1On();
-        Serial.print("Pressure Spiked!");
-        Serial.print("\n");
+//        Serial.print("Pressure Spiked!");
+//        Serial.print("\n");
         fillState = 2;
         break;
       }
@@ -226,14 +249,14 @@ void fillBladders(){
 
     while (fillState == 2){
       sol2Off();
-      if (pressureRead<400){
-        if (potRead >= 1014){
+      if (pressureRead<maxPressure){
+        if (potRead >= maxpot){
           stopMotor();
         }
         else{
-        driveMotorFor(50);
-        Serial.print("Driving motor");
-        Serial.print("\n");
+        driveMotorFor(250);
+//        Serial.print("Driving motor");
+//        Serial.print("\n");
         fillState = 3;
       }
       }
@@ -241,8 +264,8 @@ void fillBladders(){
         //if pressure spike, set oldHall to the current hallread value
         oldHall[2] = hallRead2;
         sol2On();
-        Serial.print("Pressure Spiked!");
-        Serial.print("\n");
+//        Serial.print("Pressure Spiked!");
+//        Serial.print("\n");
         fillState = 3;
         break;
       }
@@ -250,14 +273,14 @@ void fillBladders(){
     
 while (fillState == 3){
       sol3Off();
-      if (pressureRead<400){
-        if (potRead >= 1014){
+      if (pressureRead<maxPressure){
+        if (potRead >= maxpot){
           stopMotor();
         }
         else{
-        driveMotorFor(50);
-        Serial.print("Driving motor");
-        Serial.print("\n");
+        driveMotorFor(250);
+//        Serial.print("Driving motor");
+//        Serial.print("\n");
         fillState = 4;
       }
       }
@@ -265,8 +288,8 @@ while (fillState == 3){
         //if pressure spike, set oldHall to the current hallread value
         oldHall[3] = hallRead3;
         sol3On();
-        Serial.print("Pressure Spiked!");
-        Serial.print("\n");
+//        Serial.print("Pressure Spiked!");
+//        Serial.print("\n");
         fillState = 4;
         break;
       }
@@ -274,14 +297,14 @@ while (fillState == 3){
     
 while (fillState == 4){
       sol4Off();
-      if (pressureRead<400){
-        if (potRead >= 1014){
+      if (pressureRead<maxPressure){
+        if (potRead >= maxpot){
           stopMotor();
         }
         else{
-        driveMotorFor(50);
-        Serial.print("Driving motor");
-        Serial.print("\n");
+        driveMotorFor(250);
+//        Serial.print("Driving motor");
+//        Serial.print("\n");
         fillState =1;
       }
       }
@@ -289,8 +312,8 @@ while (fillState == 4){
         //if pressure spike, set oldHall to the current hallread value
         oldHall[4] = hallRead4;
         sol4On();
-        Serial.print("Pressure Spiked!");
-        Serial.print("\n");
+//        Serial.print("Pressure Spiked!");
+//        Serial.print("\n");
         break;
       }
 }
@@ -307,11 +330,11 @@ void passiveState(){
   sol3On();
   sol4On();
   
-motorCheck();
+//motorCheck();
 Serial.print(potRead);
     Serial.print("\n");
     while (hallRead1 <=oldHall[1]+100){
-        if (potRead >= 1014){
+        if (potRead >= maxpot){
     stopMotor();
         }
         else{
@@ -324,7 +347,7 @@ Serial.print(potRead);
   }
 
     while (hallRead2 >=oldHall[2]+100){
-        if (potRead >= 1014){
+        if (potRead >= maxpot){
     stopMotor();
         }
         else{
@@ -337,7 +360,7 @@ Serial.print(potRead);
   }
 
     while (hallRead3 >=oldHall[3]+100){
-        if (potRead >= 1014){
+        if (potRead >= maxpot){
     stopMotor();
         }
         else{
@@ -350,7 +373,7 @@ Serial.print(potRead);
   }
 
       while (hallRead4 >=oldHall[4]+100){
-        if (potRead >= 1014){
+        if (potRead >= maxpot){
     stopMotor();
         }
         else{
@@ -439,11 +462,11 @@ void activeBladder(){
   sol3On();
   sol4On();
   
-motorCheck();
+//motorCheck();
 Serial.print(potRead);
     Serial.print("\n");
     while (hallRead1 >=oldHall[1]){
-        if (potRead >= 1014){
+        if (potRead >= maxpot){
     stopMotor();
         }
         else{
@@ -456,7 +479,7 @@ Serial.print(potRead);
   }
 
     while (hallRead2 >=oldHall[2]){
-        if (potRead >= 1014){
+        if (potRead >= maxpot){
     stopMotor();
         }
         else{
@@ -469,7 +492,7 @@ Serial.print(potRead);
   }
 
     while (hallRead3 >=oldHall[3]){
-        if (potRead >= 1014){
+        if (potRead >= maxpot){
     stopMotor();
         }
         else{
@@ -482,7 +505,7 @@ Serial.print(potRead);
   }
 
       while (hallRead4 >=oldHall[4]){
-        if (potRead >= 1014){
+        if (potRead >= maxpot){
     stopMotor();
         }
         else{
@@ -500,6 +523,16 @@ Serial.print("exit active state");
   //return;
   //if all set, then break and go back to rms reading
 }
+
+
+void emptyBladders(){
+  sol1Off();
+  sol2Off();
+  sol3Off();
+  sol4Off();
+  driveMotorBack(1000);
+}
+
 
 
 
